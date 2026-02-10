@@ -1,7 +1,6 @@
 import os
 import json
 import secrets
-import asyncio
 from fastapi import FastAPI, Form, Request, Depends, HTTPException, status
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
@@ -20,8 +19,8 @@ openai_client = OpenAI(api_key=openai_key) if openai_key else None
 google_key = os.getenv("GOOGLE_API_KEY")
 if google_key:
     genai.configure(api_key=google_key)
-    # Wir nehmen 'gemini-pro', das ist stabil und verfügbar
-    gemini_model = genai.GenerativeModel('gemini-pro')
+    # Wir nutzen das aktuellste Flash-Modell
+    gemini_model = genai.GenerativeModel('gemini-1.5-flash')
 else:
     gemini_model = None
 
@@ -30,12 +29,11 @@ security = HTTPBasic()
 templates = Jinja2Templates(directory="templates")
 PROMPTS_FILE = "prompts.json"
 
-# --- HELFER: Text säubern (Markdown entfernen) ---
+# --- HELFER: Text säubern ---
 def clean_text(text: str) -> str:
     if not text: return ""
     # Entfernt Markdown Fettgedrucktes (**) und Überschriften (##)
     text = text.replace("**", "").replace("##", "").replace("###", "")
-    # Entfernt unnötige Leerzeichen am Anfang jeder Zeile
     lines = [line.lstrip() for line in text.split('\n')]
     return '\n'.join(lines)
 
@@ -111,9 +109,7 @@ async def generate(
                 temperature=0.7
             )
             raw_text = response.choices[0].message.content
-            # HIER wird gesäubert:
-            clean_gpt = clean_text(raw_text)
-            results.append(f"🤖 --- GPT-4o VORSCHLÄGE ---\n\n{clean_gpt}")
+            results.append(f"🤖 --- GPT-4o VORSCHLÄGE ---\n\n{clean_text(raw_text)}")
         except Exception as e:
             results.append(f"GPT Fehler: {str(e)}")
     
@@ -122,13 +118,10 @@ async def generate(
         try:
             full_prompt = f"SYSTEM ANWEISUNG:\n{system_msg}\n\nUSER ANFRAGE:\n{user_msg}"
             response = gemini_model.generate_content(full_prompt)
-            # Gemini blockiert manchmal Content ("Safety"). Das fangen wir ab:
             if response.text:
-                raw_gemini = response.text
-                clean_gemini = clean_text(raw_gemini)
-                results.append(f"\n\n✨ --- GEMINI VORSCHLÄGE ---\n\n{clean_gemini}")
+                results.append(f"\n\n✨ --- GEMINI VORSCHLÄGE ---\n\n{clean_text(response.text)}")
             else:
-                results.append("\n\nGemini hat keinen Text zurückgegeben (evtl. Safety Filter).")
+                results.append("\n\nGemini hat keinen Text zurückgegeben.")
         except Exception as e:
             results.append(f"\n\nGemini Fehler: {str(e)}")
 

@@ -3,34 +3,35 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Moderations-App</title>
+    <title>JMA Assistent</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         body { background-color: #f4f4f9; color: #333; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; }
         .app-container { max-width: 1400px; margin: 30px auto; background: white; padding: 30px; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
         
+        /* Navigation Buttons - Jetzt Rot bei Aktivität */
         .nav-btn { color: #666; font-weight: 600; padding: 8px 16px; border-radius: 6px; transition: all 0.2s; }
-        .nav-btn:hover { background-color: #f0f0f0; color: #000; }
-        .nav-btn.active { background-color: #e6f0fa; color: #0056b3; border-bottom: 2px solid #0056b3; border-radius: 6px 6px 0 0; }
+        .nav-btn:hover { background-color: #fff0f0; color: #cc0000; }
+        .nav-btn.active { background-color: #fff5f5; color: #cc0000; border-bottom: 2px solid #cc0000; border-radius: 6px 6px 0 0; }
         
-        /* Sub-Mode Buttons (Ideen, Single/Double) */
+        /* Sub-Mode Buttons */
         .mode-btn { border: 1px solid #ddd; padding: 8px 16px; border-radius: 20px; font-size: 0.9rem; color: #555; background: #fff; cursor: pointer; transition: all 0.2s; }
         .mode-btn:hover { background: #f9f9f9; border-color: #ccc; }
-        .mode-btn.active { background: #0056b3; color: white; border-color: #0056b3; font-weight: 600; }
+        .mode-btn.active { background: #cc0000; color: white; border-color: #cc0000; font-weight: 600; }
 
         textarea, input[type="text"] { 
             background: #fff; border: 1px solid #ddd; color: #333; 
             width: 100%; padding: 12px; border-radius: 6px; outline: none; transition: border 0.2s; font-size: 15px; line-height: 1.5;
         }
-        textarea:focus, input[type="text"]:focus { border-color: #0056b3; box-shadow: 0 0 0 3px rgba(0,86,179,0.1); }
+        textarea:focus, input[type="text"]:focus { border-color: #cc0000; box-shadow: 0 0 0 3px rgba(204,0,0,0.1); }
         
-        .btn-primary { background-color: #0056b3; color: white; font-weight: bold; padding: 12px; border-radius: 6px; transition: background 0.2s; }
-        .btn-primary:hover { background-color: #004494; }
+        /* Haupt Button Rot */
+        .btn-primary { background-color: #cc0000; color: white; font-weight: bold; padding: 12px; border-radius: 6px; transition: background 0.2s; }
+        .btn-primary:hover { background-color: #a30000; }
         
         .horizontal-split { display: grid; grid-template-columns: 1fr 1fr; gap: 30px; }
         .label-text { display: block; font-size: 0.85rem; font-weight: 700; color: #555; margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.5px; }
         
-        /* Settings Overlay */
         .settings-overlay { background: rgba(0,0,0,0.5); position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 50; display: none; align-items: center; justify-content: center; }
         .settings-box { background: white; padding: 30px; border-radius: 8px; width: 90%; max-width: 1000px; height: 90%; overflow-y: auto; position: relative; }
     </style>
@@ -39,8 +40,8 @@
     <div class="app-container">
         <header class="flex justify-between items-center mb-8 border-b border-gray-200 pb-4">
             <div class="flex items-center space-x-2">
-                <div class="w-3 h-8 bg-blue-700"></div>
-                <h1 class="text-xl font-bold text-gray-800 tracking-tight">MODERATIONS ASSISTENT</h1>
+                <div class="w-3 h-8 bg-red-700"></div>
+                <h1 class="text-xl font-bold text-gray-800 tracking-tight">JMA ASSISTENT</h1>
             </div>
             <nav class="flex space-x-2">
                 <button onclick="switchTab('rtl_punkt_6')" class="nav-btn" id="btn-rtl_punkt_6">RTL Punkt 6</button>
@@ -49,7 +50,7 @@
                 <button onclick="switchTab('wdr2_oneliner')" class="nav-btn" id="btn-wdr2_oneliner">WDR2 One-Liner</button>
                 <button onclick="switchTab('wdr2_ideen')" class="nav-btn" id="btn-wdr2_ideen">✨ WDR2 Ideen</button>
             </nav>
-            <button onclick="openSettings()" class="text-gray-400 hover:text-blue-600 transition">⚙️</button>
+            <button onclick="openSettings()" class="text-gray-400 hover:text-red-600 transition">⚙️</button>
         </header>
 
         <div id="main-ui" class="horizontal-split">
@@ -57,7 +58,6 @@
                 
                 <div id="mode-area" class="bg-gray-50 p-3 rounded-lg border border-gray-200 min-h-[60px] flex items-center">
                     </div>
-                
                 <input type="hidden" id="selected-mode" value="">
 
                 <div>
@@ -106,7 +106,6 @@
         let currentCategory = 'rtl_punkt_6';
         let promptData = {{ prompts | tojson }};
 
-        // Konfiguration der Modes pro Kategorie
         const config = {
             'rtl_punkt_6': { 
                 modes: [{id:'single', label:'Einzelmoderation'}, {id:'double', label:'Doppelmoderation'}],
@@ -117,7 +116,7 @@
                 label: "Redaktionsvorschlag:"
             },
             'wdr2_mod': { 
-                modes: [], // Keine Auswahl -> Automatisch 'double' im Backend senden oder fix setzen
+                modes: [],
                 defaultMode: 'double',
                 label: "Redaktionsvorschlag:",
                 info: "Nur Doppelmoderation verfügbar."
@@ -136,26 +135,22 @@
                     {id:'custom', label:'Freie Frage'}
                 ],
                 label: "Thema / Idee:",
-                placeholder: "Gib ein Thema ein (z.B. 'Tag des Kaffees') oder stelle eine Frage..."
+                placeholder: "Gib ein Thema ein oder stelle eine Frage..."
             }
         };
 
         function switchTab(cat) {
             currentCategory = cat;
-            
-            // 1. Navigation Styling
             document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
             document.getElementById('btn-' + cat).classList.add('active');
             
-            // 2. UI Elemente updaten
             const conf = config[cat];
             document.getElementById('input-label').innerText = conf.label;
             const inputArea = document.getElementById('content-input');
             inputArea.placeholder = conf.placeholder || "Text hier einfügen...";
             
-            // 3. Mode Buttons bauen
             const modeContainer = document.getElementById('mode-area');
-            modeContainer.innerHTML = ''; // Clear
+            modeContainer.innerHTML = ''; 
 
             if (conf.modes.length > 0) {
                 conf.modes.forEach((m, index) => {
@@ -165,10 +160,8 @@
                     btn.onclick = () => setMode(m.id, btn);
                     modeContainer.appendChild(btn);
                 });
-                // Setze den ersten Mode als default
                 document.getElementById('selected-mode').value = conf.modes[0].id;
             } else {
-                // Wenn keine Auswahl (z.B. WDR2 Mod), zeige Info-Text
                 if(conf.info) {
                     modeContainer.innerHTML = `<span class="text-gray-400 text-sm italic">${conf.info}</span>`;
                 } else {
@@ -213,37 +206,29 @@
             btn.classList.remove('opacity-50');
         }
 
-        // --- Settings Logic (für dynamische Felder) ---
         function openSettings() {
             const container = document.getElementById('settings-form-container');
             container.innerHTML = ''; 
-
             for (const [category, modesObj] of Object.entries(promptData)) {
                 const groupDiv = document.createElement('div');
                 groupDiv.className = 'bg-gray-50 p-4 rounded border mb-4';
-                
                 const title = document.createElement('h3');
-                title.className = 'font-bold text-blue-800 mb-2 uppercase text-sm';
+                title.className = 'font-bold text-red-800 mb-2 uppercase text-sm'; // Auch hier Rot
                 title.innerText = category.replace(/_/g, " ");
                 groupDiv.appendChild(title);
 
                 for (const [modeKey, text] of Object.entries(modesObj)) {
                     const wrap = document.createElement('div');
                     wrap.className = 'mb-4';
-                    
                     const label = document.createElement('label');
                     label.className = 'block text-xs font-bold text-gray-500 mb-1 uppercase';
                     label.innerText = modeKey;
-                    
                     const area = document.createElement('textarea');
                     area.rows = 4;
                     area.className = 'w-full p-2 border rounded text-sm font-mono';
                     area.value = text;
                     area.id = `setting-${category}-${modeKey}`;
-
-                    wrap.appendChild(label);
-                    wrap.appendChild(area);
-                    groupDiv.appendChild(wrap);
+                    wrap.appendChild(label); wrap.appendChild(area); groupDiv.appendChild(wrap);
                 }
                 container.appendChild(groupDiv);
             }
@@ -253,17 +238,14 @@
         function closeSettings() { document.getElementById('settings-overlay').style.display = 'none'; }
         
         async function saveSettings() {
-            // Werte zurücklesen
             for (const [category, modesObj] of Object.entries(promptData)) {
                 for (const modeKey of Object.keys(modesObj)) {
                     const el = document.getElementById(`setting-${category}-${modeKey}`);
                     if(el) promptData[category][modeKey] = el.value;
                 }
             }
-            // Senden
             await fetch('/save_settings', {
-                method: 'POST', 
-                headers: {'Content-Type': 'application/json'},
+                method: 'POST', headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify(promptData)
             });
             alert("Gespeichert!");
@@ -276,7 +258,6 @@
             document.execCommand('copy');
         }
 
-        // Starten
         switchTab('rtl_punkt_6');
     </script>
 </body>
