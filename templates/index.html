@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Moderations-App</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { background: #1a1a1a; color: #e0e0e0; font-family: sans-serif; }
+        .app-container { max-width: 1200px; margin: 0 auto; padding: 20px; }
+        .horizontal-split { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        textarea { background: #2d2d2d; border: 1px solid #444; color: white; resize: none; width: 100%; }
+        .tab-btn.active { border-bottom: 3px solid #3b82f6; color: #3b82f6; }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <header class="flex justify-between items-center mb-6 border-b border-gray-700 pb-4">
+            <h1 class="text-xl font-bold uppercase tracking-widest">Moderations-Suite</h1>
+            <nav class="flex space-x-6">
+                <button onclick="switchTab('rtl_6_12')" class="tab-btn px-2 py-1" id="btn-rtl_6_12">RTL Punkt 6/12</button>
+                <button onclick="switchTab('wdr2_mod')" class="tab-btn px-2 py-1" id="btn-wdr2_mod">WDR2 Moderation</button>
+                <button onclick="switchTab('wdr2_oneliner')" class="tab-btn px-2 py-1" id="btn-wdr2_oneliner">WDR2 One-Liner</button>
+                <button onclick="toggleSettings()" class="text-gray-400 hover:text-white">⚙️ Settings</button>
+            </nav>
+        </header>
+
+        <div id="main-ui" class="horizontal-split">
+            <div class="space-y-4">
+                <div class="flex items-center space-x-4 mb-2" id="mode-selector">
+                    <label><input type="radio" name="mode" value="single" checked> Einzelmod</label>
+                    <label><input type="radio" name="mode" value="double"> Doppelmod</label>
+                </div>
+                <div>
+                    <label class="block text-sm text-gray-400 mb-1" id="input-label">Redaktionsvorschlag:</label>
+                    <textarea id="content-input" rows="12" class="p-3 rounded"></textarea>
+                </div>
+                <div>
+                    <label class="block text-sm text-gray-400 mb-1">Zusatzwünsche:</label>
+                    <input type="text" id="extra-input" class="w-full p-2 rounded bg-[#2d2d2d] border border-[#444] text-white">
+                </div>
+                <button onclick="generate()" id="gen-btn" class="w-full bg-blue-600 hover:bg-blue-700 p-3 rounded font-bold transition">JETZT UMSCHREIBEN</button>
+            </div>
+
+            <div class="flex flex-col">
+                <label class="block text-sm text-gray-400 mb-1">Ergebnis:</label>
+                <textarea id="output-area" rows="18" class="p-3 rounded flex-grow" readonly></textarea>
+                <div class="flex space-x-4 mt-4">
+                    <button onclick="copyText()" class="flex-grow bg-gray-700 hover:bg-gray-600 p-2 rounded">Kopieren</button>
+                    <button onclick="clearAll()" class="w-1/4 border border-gray-600 hover:bg-gray-800 p-2 rounded">Löschen</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="settings-ui" class="hidden space-y-4 bg-[#252525] p-6 rounded border border-gray-700 mt-4">
+            <h2 class="text-lg font-bold">System-Prompts bearbeiten</h2>
+            <p class="text-xs text-gray-400">Hier kannst du die Anweisungen für die KI anpassen.</p>
+            <textarea id="settings-json" rows="15" class="font-mono text-sm p-3 rounded"></textarea>
+            <button onclick="saveSettings()" class="bg-green-600 hover:bg-green-700 px-6 py-2 rounded">Prompts Speichern</button>
+        </div>
+    </div>
+
+    <script>
+        let currentCategory = 'rtl_6_12';
+        let promptData = {{ prompts | tojson }};
+
+        function switchTab(cat) {
+            currentCategory = cat;
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            document.getElementById('btn-' + cat).classList.add('active');
+            
+            // UI Anpassungen
+            const modeSelector = document.getElementById('mode-selector');
+            const label = document.getElementById('input-label');
+            
+            if(cat === 'wdr2_oneliner') {
+                modeSelector.classList.add('invisible');
+                label.innerText = "Themen des Morgens:";
+            } else {
+                modeSelector.classList.remove('invisible');
+                label.innerText = "Redaktionsvorschlag:";
+            }
+        }
+
+        async function generate() {
+            const btn = document.getElementById('gen-btn');
+            const mode = document.querySelector('input[name="mode"]:checked').value;
+            const content = document.getElementById('content-input').value;
+            const extra = document.getElementById('extra-input').value;
+
+            if(!content) return alert("Bitte Text eingeben!");
+
+            btn.disabled = true; btn.innerText = "Verarbeite...";
+            
+            const formData = new FormData();
+            formData.append('category', currentCategory);
+            formData.append('mode', mode);
+            formData.append('content', content);
+            formData.append('extra', extra);
+
+            const res = await fetch('/generate', { method: 'POST', body: formData });
+            const data = await res.json();
+            document.getElementById('output-area').value = data.result;
+            
+            btn.disabled = false; btn.innerText = "JETZT UMSCHREIBEN";
+        }
+
+        function copyText() {
+            const out = document.getElementById('output-area');
+            out.select();
+            document.execCommand('copy');
+            alert("Kopiert!");
+        }
+
+        function clearAll() {
+            document.getElementById('content-input').value = "";
+            document.getElementById('extra-input').value = "";
+            document.getElementById('output-area').value = "";
+        }
+
+        function toggleSettings() {
+            const ui = document.getElementById('settings-ui');
+            const main = document.getElementById('main-ui');
+            if(ui.classList.contains('hidden')) {
+                document.getElementById('settings-json').value = JSON.stringify(promptData, null, 2);
+                ui.classList.remove('hidden'); main.classList.add('hidden');
+            } else {
+                ui.classList.add('hidden'); main.classList.remove('hidden');
+            }
+        }
+
+        async function saveSettings() {
+            try {
+                const updated = JSON.parse(document.getElementById('settings-json').value);
+                const res = await fetch('/save_settings', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify(updated)
+                });
+                if(res.ok) {
+                    promptData = updated;
+                    alert("Gespeichert!");
+                    toggleSettings();
+                }
+            } catch(e) { alert("Fehler im JSON Format!"); }
+        }
+
+        // Initialer Start
+        switchTab('rtl_6_12');
+    </script>
+</body>
+</html>

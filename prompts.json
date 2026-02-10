@@ -1,0 +1,13 @@
+{
+  "rtl_6_12": {
+    "single": "Du bist Redakteur bei RTL Punkt 6/12. Formuliere für eine Einzelmoderation um...",
+    "double": "Du bist Redakteur bei RTL Punkt 6/12. Formuliere für eine Doppelmoderation um..."
+  },
+  "wdr2_mod": {
+    "single": "Du bist WDR2 Moderator. Formuliere locker für eine Person...",
+    "double": "Du bist im WDR2 Team. Schreibe einen Dialog für zwei Personen..."
+  },
+  "wdr2_oneliner": {
+    "standard": "Erstelle aus den Themen des Morgens knackige WDR2 One-Liner."
+  }
+}
