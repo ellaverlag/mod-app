@@ -1,13 +1,17 @@
 {
-  "rtl_6_12": {
-    "single": "Du bist Redakteur bei RTL Punkt 6/12. Formuliere für eine Einzelmoderation um...",
-    "double": "Du bist Redakteur bei RTL Punkt 6/12. Formuliere für eine Doppelmoderation um..."
+  "rtl_punkt_6": {
+    "single": "Du bist Redakteur bei RTL Punkt 6. Schreibe diese Meldung für eine morgendliche Einzelmoderation um. Sei wach, dynamisch und informativ.",
+    "double": "Du bist Redakteur bei RTL Punkt 6. Schreibe diese Meldung als Dialog für zwei Moderatoren um. Spielt euch die Bälle zu."
+  },
+  "rtl_punkt_12": {
+    "single": "Du bist Redakteur bei RTL Punkt 12. Schreibe diese Meldung für den Mittag. Seriös, aber nahbar.",
+    "double": "Du bist Redakteur bei RTL Punkt 12. Schreibe einen Dialog für die Mittagsmoderation."
   },
   "wdr2_mod": {
-    "single": "Du bist WDR2 Moderator. Formuliere locker für eine Person...",
-    "double": "Du bist im WDR2 Team. Schreibe einen Dialog für zwei Personen..."
+    "single": "Du bist WDR2 Moderator. Schreibe locker, nahbar und im 'Du'.",
+    "double": "Du bist im WDR2 Team. Schreibe einen unterhaltsamen Dialog für zwei Personen."
   },
   "wdr2_oneliner": {
-    "standard": "Erstelle aus den Themen des Morgens knackige WDR2 One-Liner."
+    "standard": "Erstelle aus diesen Themen knackige One-Liner für den Morgen bei WDR2."
   }
 }

@@ -6,80 +6,220 @@
     <title>Moderations-App</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        body { background: #1a1a1a; color: #e0e0e0; font-family: sans-serif; }
-        .app-container { max-width: 1200px; margin: 0 auto; padding: 20px; }
-        .horizontal-split { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
-        textarea { background: #2d2d2d; border: 1px solid #444; color: white; resize: none; width: 100%; }
-        .tab-btn.active { border-bottom: 3px solid #3b82f6; color: #3b82f6; }
+        /* Helles FAZ-inspiriertes Design */
+        body { background-color: #f4f4f9; color: #333; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; }
+        .app-container { max-width: 1400px; margin: 30px auto; background: white; padding: 30px; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
+        
+        /* Navigation */
+        .nav-btn { color: #666; font-weight: 600; padding: 8px 16px; border-radius: 6px; transition: all 0.2s; }
+        .nav-btn:hover { background-color: #f0f0f0; color: #000; }
+        .nav-btn.active { background-color: #e6f0fa; color: #0056b3; border-bottom: 2px solid #0056b3; border-radius: 6px 6px 0 0; }
+        
+        /* Eingabefelder */
+        textarea, input[type="text"] { 
+            background: #fff; border: 1px solid #ddd; color: #333; 
+            width: 100%; padding: 12px; border-radius: 6px; outline: none; transition: border 0.2s; font-size: 15px; line-height: 1.5;
+        }
+        textarea:focus, input[type="text"]:focus { border-color: #0056b3; box-shadow: 0 0 0 3px rgba(0,86,179,0.1); }
+        
+        /* Buttons */
+        .btn-primary { background-color: #0056b3; color: white; font-weight: bold; padding: 12px; border-radius: 6px; transition: background 0.2s; }
+        .btn-primary:hover { background-color: #004494; }
+        .btn-secondary { background-color: #f0f0f0; color: #333; font-weight: 600; padding: 8px; border-radius: 6px; border: 1px solid #ddd; }
+        .btn-secondary:hover { background-color: #e0e0e0; }
+        
+        /* Layout Helfer */
+        .horizontal-split { display: grid; grid-template-columns: 1fr 1fr; gap: 30px; }
+        .label-text { display: block; font-size: 0.85rem; font-weight: 700; color: #555; margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.5px; }
+        
+        /* Settings Overlay */
+        .settings-overlay { background: rgba(0,0,0,0.5); position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 50; display: none; align-items: center; justify-content: center; }
+        .settings-box { background: white; padding: 30px; border-radius: 8px; width: 90%; max-width: 1000px; height: 90%; overflow-y: auto; position: relative; }
+        .prompt-group { background: #f9f9f9; padding: 15px; margin-bottom: 15px; border-radius: 6px; border: 1px solid #eee; }
     </style>
 </head>
 <body>
     <div class="app-container">
-        <header class="flex justify-between items-center mb-6 border-b border-gray-700 pb-4">
-            <h1 class="text-xl font-bold uppercase tracking-widest">Moderations-Suite</h1>
-            <nav class="flex space-x-6">
-                <button onclick="switchTab('rtl_6_12')" class="tab-btn px-2 py-1" id="btn-rtl_6_12">RTL Punkt 6/12</button>
-                <button onclick="switchTab('wdr2_mod')" class="tab-btn px-2 py-1" id="btn-wdr2_mod">WDR2 Moderation</button>
-                <button onclick="switchTab('wdr2_oneliner')" class="tab-btn px-2 py-1" id="btn-wdr2_oneliner">WDR2 One-Liner</button>
-                <button onclick="toggleSettings()" class="text-gray-400 hover:text-white">⚙️ Settings</button>
+        <header class="flex justify-between items-center mb-8 border-b border-gray-200 pb-4">
+            <div class="flex items-center space-x-2">
+                <div class="w-3 h-8 bg-blue-700"></div> <h1 class="text-xl font-bold text-gray-800 tracking-tight">MODERATIONS ASSISTENT</h1>
+            </div>
+            <nav class="flex space-x-2">
+                <button onclick="switchTab('rtl_punkt_6')" class="nav-btn" id="btn-rtl_punkt_6">RTL Punkt 6</button>
+                <button onclick="switchTab('rtl_punkt_12')" class="nav-btn" id="btn-rtl_punkt_12">RTL Punkt 12</button>
+                <button onclick="switchTab('wdr2_mod')" class="nav-btn" id="btn-wdr2_mod">WDR2 Moderation</button>
+                <button onclick="switchTab('wdr2_oneliner')" class="nav-btn" id="btn-wdr2_oneliner">WDR2 One-Liner</button>
             </nav>
+            <button onclick="openSettings()" class="text-gray-400 hover:text-blue-600 transition">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                </svg>
+            </button>
         </header>
 
         <div id="main-ui" class="horizontal-split">
-            <div class="space-y-4">
-                <div class="flex items-center space-x-4 mb-2" id="mode-selector">
-                    <label><input type="radio" name="mode" value="single" checked> Einzelmod</label>
-                    <label><input type="radio" name="mode" value="double"> Doppelmod</label>
+            <div class="flex flex-col space-y-5">
+                
+                <div id="mode-selector" class="bg-gray-50 p-3 rounded-lg border border-gray-200 flex space-x-6">
+                    <label class="flex items-center space-x-2 cursor-pointer">
+                        <input type="radio" name="mode" value="single" checked class="text-blue-600 focus:ring-blue-500">
+                        <span class="font-medium text-gray-700">Einzelmoderation</span>
+                    </label>
+                    <label class="flex items-center space-x-2 cursor-pointer">
+                        <input type="radio" name="mode" value="double" class="text-blue-600 focus:ring-blue-500">
+                        <span class="font-medium text-gray-700">Doppelmoderation</span>
+                    </label>
                 </div>
+
                 <div>
-                    <label class="block text-sm text-gray-400 mb-1" id="input-label">Redaktionsvorschlag:</label>
-                    <textarea id="content-input" rows="12" class="p-3 rounded"></textarea>
+                    <label class="label-text" id="input-label">Redaktionsvorschlag</label>
+                    <textarea id="content-input" rows="10" placeholder="Text hier einfügen..."></textarea>
                 </div>
+                
                 <div>
-                    <label class="block text-sm text-gray-400 mb-1">Zusatzwünsche:</label>
-                    <input type="text" id="extra-input" class="w-full p-2 rounded bg-[#2d2d2d] border border-[#444] text-white">
+                    <label class="label-text">Zusatzwünsche an die KI</label>
+                    <input type="text" id="extra-input" placeholder="z.B. 'kürzer', 'witziger', 'mehr Fokus auf News'...">
                 </div>
-                <button onclick="generate()" id="gen-btn" class="w-full bg-blue-600 hover:bg-blue-700 p-3 rounded font-bold transition">JETZT UMSCHREIBEN</button>
+
+                <button onclick="generate()" id="gen-btn" class="btn-primary w-full shadow-md">
+                    TEXT UMSCHREIBEN
+                </button>
             </div>
 
-            <div class="flex flex-col">
-                <label class="block text-sm text-gray-400 mb-1">Ergebnis:</label>
-                <textarea id="output-area" rows="18" class="p-3 rounded flex-grow" readonly></textarea>
-                <div class="flex space-x-4 mt-4">
-                    <button onclick="copyText()" class="flex-grow bg-gray-700 hover:bg-gray-600 p-2 rounded">Kopieren</button>
-                    <button onclick="clearAll()" class="w-1/4 border border-gray-600 hover:bg-gray-800 p-2 rounded">Löschen</button>
+            <div class="flex flex-col h-full">
+                <label class="label-text">Ergebnis</label>
+                <textarea id="output-area" class="flex-grow bg-gray-50 font-medium" readonly style="min-height: 400px;"></textarea>
+                
+                <div class="flex space-x-3 mt-4">
+                    <button onclick="copyText()" class="btn-secondary flex-grow flex justify-center items-center space-x-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" /></svg>
+                        <span>Kopieren</span>
+                    </button>
+                    <button onclick="clearAll()" class="btn-secondary text-red-600 hover:text-red-700 hover:bg-red-50 w-1/4">
+                        Löschen
+                    </button>
                 </div>
             </div>
         </div>
+    </div>
 
-        <div id="settings-ui" class="hidden space-y-4 bg-[#252525] p-6 rounded border border-gray-700 mt-4">
-            <h2 class="text-lg font-bold">System-Prompts bearbeiten</h2>
-            <p class="text-xs text-gray-400">Hier kannst du die Anweisungen für die KI anpassen.</p>
-            <textarea id="settings-json" rows="15" class="font-mono text-sm p-3 rounded"></textarea>
-            <button onclick="saveSettings()" class="bg-green-600 hover:bg-green-700 px-6 py-2 rounded">Prompts Speichern</button>
+    <div id="settings-overlay" class="settings-overlay">
+        <div class="settings-box">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-2xl font-bold text-gray-800">Prompt Einstellungen</h2>
+                <button onclick="closeSettings()" class="text-gray-500 hover:text-red-500 text-3xl">&times;</button>
+            </div>
+            
+            <div id="settings-form-container" class="space-y-6">
+                </div>
+
+            <div class="mt-8 flex justify-end space-x-4 border-t pt-4">
+                <button onclick="closeSettings()" class="btn-secondary px-6">Abbrechen</button>
+                <button onclick="saveSettings()" class="btn-primary px-8 bg-green-600 hover:bg-green-700">Speichern</button>
+            </div>
         </div>
     </div>
 
     <script>
-        let currentCategory = 'rtl_6_12';
+        let currentCategory = 'rtl_punkt_6';
         let promptData = {{ prompts | tojson }};
+
+        // Mapping für schönere Namen in den Settings
+        const niceNames = {
+            'rtl_punkt_6': 'RTL Punkt 6',
+            'rtl_punkt_12': 'RTL Punkt 12',
+            'wdr2_mod': 'WDR2 Moderation',
+            'wdr2_oneliner': 'WDR2 One-Liner',
+            'single': 'Einzelmoderation',
+            'double': 'Doppelmoderation',
+            'standard': 'Standard'
+        };
 
         function switchTab(cat) {
             currentCategory = cat;
-            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
             document.getElementById('btn-' + cat).classList.add('active');
             
-            // UI Anpassungen
             const modeSelector = document.getElementById('mode-selector');
             const label = document.getElementById('input-label');
             
             if(cat === 'wdr2_oneliner') {
-                modeSelector.classList.add('invisible');
+                modeSelector.classList.add('hidden');
                 label.innerText = "Themen des Morgens:";
+                document.getElementById('content-input').placeholder = "1. Thema: Stau auf A1...\n2. Thema: Wetter...";
             } else {
-                modeSelector.classList.remove('invisible');
+                modeSelector.classList.remove('hidden');
                 label.innerText = "Redaktionsvorschlag:";
+                document.getElementById('content-input').placeholder = "Text hier einfügen...";
             }
+        }
+
+        function openSettings() {
+            const container = document.getElementById('settings-form-container');
+            container.innerHTML = ''; // Reset
+
+            // Wir bauen das Formular dynamisch aus dem JSON
+            for (const [category, modes] of Object.entries(promptData)) {
+                const groupDiv = document.createElement('div');
+                groupDiv.className = 'prompt-group';
+                
+                const title = document.createElement('h3');
+                title.className = 'font-bold text-lg mb-4 text-blue-800 border-b pb-2';
+                title.innerText = niceNames[category] || category;
+                groupDiv.appendChild(title);
+
+                for (const [mode, text] of Object.entries(modes)) {
+                    const wrap = document.createElement('div');
+                    wrap.className = 'mb-4';
+                    
+                    const label = document.createElement('label');
+                    label.className = 'block text-sm font-bold text-gray-600 mb-1';
+                    label.innerText = niceNames[mode] || mode;
+                    
+                    const area = document.createElement('textarea');
+                    area.rows = 4;
+                    area.className = 'w-full p-2 border rounded text-sm font-mono';
+                    area.value = text;
+                    area.id = `setting-${category}-${mode}`; // Unique ID zum Auslesen
+
+                    wrap.appendChild(label);
+                    wrap.appendChild(area);
+                    groupDiv.appendChild(wrap);
+                }
+                container.appendChild(groupDiv);
+            }
+            document.getElementById('settings-overlay').style.display = 'flex';
+        }
+
+        function closeSettings() {
+            document.getElementById('settings-overlay').style.display = 'none';
+        }
+
+        async function saveSettings() {
+            // Wir lesen die Werte aus den Textfeldern zurück in das Objekt
+            for (const [category, modes] of Object.entries(promptData)) {
+                for (const mode of Object.keys(modes)) {
+                    const el = document.getElementById(`setting-${category}-${mode}`);
+                    if(el) {
+                        promptData[category][mode] = el.value;
+                    }
+                }
+            }
+
+            try {
+                const res = await fetch('/save_settings', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify(promptData)
+                });
+                if(res.ok) {
+                    alert("Einstellungen erfolgreich gespeichert!");
+                    closeSettings();
+                } else {
+                    alert("Fehler beim Speichern.");
+                }
+            } catch(e) { alert("Netzwerkfehler!"); }
         }
 
         async function generate() {
@@ -91,6 +231,7 @@
             if(!content) return alert("Bitte Text eingeben!");
 
             btn.disabled = true; btn.innerText = "Verarbeite...";
+            btn.classList.add('opacity-50');
             
             const formData = new FormData();
             formData.append('category', currentCategory);
@@ -100,16 +241,21 @@
 
             const res = await fetch('/generate', { method: 'POST', body: formData });
             const data = await res.json();
-            document.getElementById('output-area').value = data.result;
             
-            btn.disabled = false; btn.innerText = "JETZT UMSCHREIBEN";
+            document.getElementById('output-area').value = data.result;
+            btn.disabled = false; btn.innerText = "TEXT UMSCHREIBEN";
+            btn.classList.remove('opacity-50');
         }
 
         function copyText() {
             const out = document.getElementById('output-area');
             out.select();
             document.execCommand('copy');
-            alert("Kopiert!");
+            // Kleines visuelles Feedback
+            const btn = document.querySelector('button[onclick="copyText()"] span');
+            const original = btn.innerText;
+            btn.innerText = "Kopiert!";
+            setTimeout(() => btn.innerText = original, 1500);
         }
 
         function clearAll() {
@@ -118,35 +264,8 @@
             document.getElementById('output-area').value = "";
         }
 
-        function toggleSettings() {
-            const ui = document.getElementById('settings-ui');
-            const main = document.getElementById('main-ui');
-            if(ui.classList.contains('hidden')) {
-                document.getElementById('settings-json').value = JSON.stringify(promptData, null, 2);
-                ui.classList.remove('hidden'); main.classList.add('hidden');
-            } else {
-                ui.classList.add('hidden'); main.classList.remove('hidden');
-            }
-        }
-
-        async function saveSettings() {
-            try {
-                const updated = JSON.parse(document.getElementById('settings-json').value);
-                const res = await fetch('/save_settings', {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify(updated)
-                });
-                if(res.ok) {
-                    promptData = updated;
-                    alert("Gespeichert!");
-                    toggleSettings();
-                }
-            } catch(e) { alert("Fehler im JSON Format!"); }
-        }
-
-        // Initialer Start
-        switchTab('rtl_6_12');
+        // Init
+        switchTab('rtl_punkt_6');
     </script>
 </body>
 </html>
