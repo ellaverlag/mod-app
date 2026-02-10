@@ -14,15 +14,14 @@ import google.generativeai as genai
 load_dotenv()
 
 # --- CLIENTS SETUP ---
-# OpenAI
 openai_key = os.getenv("OPENAI_API_KEY")
 openai_client = OpenAI(api_key=openai_key) if openai_key else None
 
-# Google Gemini
 google_key = os.getenv("GOOGLE_API_KEY")
 if google_key:
     genai.configure(api_key=google_key)
-    gemini_model = genai.GenerativeModel('gemini-1.5-flash') # Schnelles, gutes Modell
+    # Wir nehmen 'gemini-pro', das ist stabil und verfügbar
+    gemini_model = genai.GenerativeModel('gemini-pro')
 else:
     gemini_model = None
 
@@ -30,6 +29,15 @@ app = FastAPI()
 security = HTTPBasic()
 templates = Jinja2Templates(directory="templates")
 PROMPTS_FILE = "prompts.json"
+
+# --- HELFER: Text säubern (Markdown entfernen) ---
+def clean_text(text: str) -> str:
+    if not text: return ""
+    # Entfernt Markdown Fettgedrucktes (**) und Überschriften (##)
+    text = text.replace("**", "").replace("##", "").replace("###", "")
+    # Entfernt unnötige Leerzeichen am Anfang jeder Zeile
+    lines = [line.lstrip() for line in text.split('\n')]
+    return '\n'.join(lines)
 
 # --- HELFER: Prompts laden/speichern ---
 def load_prompts():
@@ -74,7 +82,6 @@ async def generate(
 ):
     prompts = load_prompts()
     
-    # Prompt auswählen
     try:
         if category == "wdr2_oneliner":
             system_msg = prompts["wdr2_oneliner"]["standard"]
@@ -88,7 +95,6 @@ async def generate(
         user_msg += f"\n\nZusatzanweisung: {extra}"
 
     # --- LOGIK: Soll Gemini dazu geschaltet werden? ---
-    # Wir nutzen Gemini zusätzlich NUR bei WDR2 One-Linern (Comedy)
     use_gemini = (category == "wdr2_oneliner") and (gemini_model is not None)
 
     results = []
@@ -104,24 +110,30 @@ async def generate(
                 ],
                 temperature=0.7
             )
-            gpt_text = response.choices[0].message.content
-            results.append(f"🤖 --- GPT-4o VORSCHLÄGE ---\n\n{gpt_text}")
+            raw_text = response.choices[0].message.content
+            # HIER wird gesäubert:
+            clean_gpt = clean_text(raw_text)
+            results.append(f"🤖 --- GPT-4o VORSCHLÄGE ---\n\n{clean_gpt}")
         except Exception as e:
             results.append(f"GPT Fehler: {str(e)}")
     
-    # 2. Gemini Abfrage (Parallel möglich, hier sequenziell der Einfachheit halber)
+    # 2. Gemini Abfrage
     if use_gemini:
         try:
-            # Gemini braucht den System-Prompt oft im Context oder als erste Nachricht
             full_prompt = f"SYSTEM ANWEISUNG:\n{system_msg}\n\nUSER ANFRAGE:\n{user_msg}"
             response = gemini_model.generate_content(full_prompt)
-            gemini_text = response.text
-            results.append(f"\n\n✨ --- GEMINI VORSCHLÄGE ---\n\n{gemini_text}")
+            # Gemini blockiert manchmal Content ("Safety"). Das fangen wir ab:
+            if response.text:
+                raw_gemini = response.text
+                clean_gemini = clean_text(raw_gemini)
+                results.append(f"\n\n✨ --- GEMINI VORSCHLÄGE ---\n\n{clean_gemini}")
+            else:
+                results.append("\n\nGemini hat keinen Text zurückgegeben (evtl. Safety Filter).")
         except Exception as e:
             results.append(f"\n\nGemini Fehler: {str(e)}")
 
     if not results:
-        return {"result": "Keine KI-Modelle konfiguriert (API Keys fehlen)."}
+        return {"result": "Keine KI-Modelle konfiguriert."}
 
     return {"result": "".join(results)}
 
